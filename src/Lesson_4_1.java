@@ -9,12 +9,14 @@ public class Lesson_4_1 {
     public static String bossDefence;
     public static boolean bossIsStun = false;
     public static int[] heroesHealth = {270, 260, 250, 250, 270, 250, 500, 300};
-    public static int[] heroesDamage = {20, 15, 10, 0, 15, 0, 5, 0}; // У медика 0 дамаг, урон не наносит
+    public static int[] heroesDamage = {20, 15, 10, 0, 15, 0, 5, 0}; // У медика, ведьмака и тора 0 дамаг, урон не наносят, а у Голема слабый удар
     public static String[] heroesAttackType =
             {"Physical", "Magical", "Kinetic",
                     "Medic", "Lucky", "Thor", "Gollum", "Witcher"};
     // Шаг №1 Добавили медика
-    // Шаг №2 Добавили Lucky
+    // Шаг №2 Добавили Thor
+    // Шаг №3 Добавили Gollum
+    // Шаг №4 Добавили Wither
     public static int roundNumber;
 
     public static void main(String[] args) {
@@ -65,29 +67,30 @@ public class Lesson_4_1 {
 
     public static void bossAttack() {
         int luckyIndex = Arrays.asList(heroesAttackType).indexOf("Lucky");
-        boolean luckyIsLucky = rand.nextBoolean();
 
         int gollumIndex = Arrays.asList(heroesAttackType).indexOf("Gollum");
         int totalSavedHealth = 0;
 
         for (int i = 0; i < heroesHealth.length; i++) {
-            if (bossIsStun) {
+            if (bossIsStun) { // Если босс имет стан от тора, то break и пропуск урона, и стан убирается
                 bossIsStun = false;
                 break;
             }
 
             if (heroesHealth[i] > 0) {
-                if (luckyIsLucky && i == luckyIndex) {
+                if (i == luckyIndex && rand.nextBoolean()) { // Если Lucky повезло, то итерация пропускается урон не проходит
                     System.out.println("--> Lucky is Lucky on this round");
                     continue;
                 }
 
                 if (heroesHealth[gollumIndex] > 0 && i != gollumIndex) {
-                    int partDamage = bossDamage / 5;
+                    int partDamage = bossDamage / 5; // Голем принимает на себя 1/5 урона от босса
                     heroesHealth[gollumIndex] = Math.max(heroesHealth[gollumIndex] - partDamage, 0);
                     heroesHealth[i] = Math.max(heroesHealth[i] - (bossDamage - partDamage), 0);
                     totalSavedHealth += partDamage;
                     continue;
+                } else if (i == gollumIndex) {
+                    continue; // Не было указано что голем получает урон от босса, поэтому я решил без урона, только 1/5
                 }
 
                 heroesHealth[i] = Math.max(heroesHealth[i] - bossDamage, 0);
@@ -113,11 +116,11 @@ public class Lesson_4_1 {
                 System.out.println("--> Boss is stunned on next round");
             }
 
-            if (i == witcherIndex && heroesHealth[witcherIndex] > 0) {
-                for (int j = 0; j < heroesHealth.length; j++){
+            if (i == witcherIndex && heroesHealth[witcherIndex] > 0) { // Если ведьмак жив
+                for (int j = 0; j < heroesHealth.length; j++){ // То он смотрит кто умер
                     if (heroesHealth[j] <= 0) {
-                        heroesHealth[j] = heroesHealth[witcherIndex];
-                        heroesHealth[witcherIndex] = 0;
+                        heroesHealth[j] = heroesHealth[witcherIndex]; // И отдает ему свою жизнь
+                        heroesHealth[witcherIndex] = 0; // Но сам погибает
                         System.out.println("--> Witcher was saved life of " + heroesAttackType[j] + " and add his " + heroesHealth[j]);
                         break;
                     }
