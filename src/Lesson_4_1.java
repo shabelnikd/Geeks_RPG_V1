@@ -4,6 +4,7 @@ import java.util.Random;
 
 public class Lesson_4_1 {
     public static Random rand = new Random();
+    public static int maxLengthName = 0;
     public static int bossHealth = 1000;
     public static int bossDamage = 50;
     public static String bossDefence;
@@ -22,35 +23,37 @@ public class Lesson_4_1 {
     public static void main(String[] args) {
         printStatistics(new int[]{0, 0});
 
+        for (String hero : heroesAttackType) {
+            if (hero.length() > maxLengthName) {
+                maxLengthName = hero.length();
+            }
+        }
+
         while (!isGameOver()) {
             playRound();
         }
     }
 
-    public static boolean isGameOver() {
+    static boolean isGameOver() {
         if (bossHealth <= 0) {
             System.out.println("Heroes won!!!");
             return true;
         }
-        boolean allHeroesDead = true;
-        for (int i : heroesHealth) {
-            if (i > 0) {
-                allHeroesDead = false;
-                break;
+
+        // Более лаконичная проверка на смерть всех героев
+        for (int health : heroesHealth) {
+            if (health > 0) {
+                return false; // Если хоть один герой жив, игра не окончена
             }
         }
-        if (allHeroesDead) {
-            System.out.println("Boss won!!!");
-            return true;
-        }
-        return false;
+
+        System.out.println("Boss won!!!");
+        return true;
     }
 
     public static void chooseBossDefence() {
-        Random random = new Random();
-        if (roundNumber != 0) {
-            int randomIndex = random.nextInt(heroesAttackType.length);
-            bossDefence = heroesAttackType[randomIndex];
+        if (roundNumber > 0) {
+            bossDefence = heroesAttackType[rand.nextInt(heroesAttackType.length)];
         }
 
     }
@@ -60,8 +63,8 @@ public class Lesson_4_1 {
         chooseBossDefence();
         bossAttack();
         int[] totalDamage = heroesAttack();
-        printStatistics(totalDamage);
         healthUpMedic(); // Медик лечит после каждого раунда
+        printStatistics(totalDamage);
     }
 
 
@@ -74,6 +77,7 @@ public class Lesson_4_1 {
         for (int i = 0; i < heroesHealth.length; i++) {
             if (bossIsStun) { // Если босс имет стан от тора, то break и пропуск урона, и стан убирается
                 bossIsStun = false;
+                System.out.println("--> Boss is stunned!");
                 break;
             }
 
@@ -90,7 +94,7 @@ public class Lesson_4_1 {
                     totalSavedHealth += partDamage;
                     continue;
                 } else if (i == gollumIndex) {
-                    continue; // Не было указано что голем получает урон от босса, поэтому я решил без урона, только 1/5
+                    continue; // Не было указано, что голем получает урон от босса, поэтому я решил без урона, только 1/5
                 }
 
                 heroesHealth[i] = Math.max(heroesHealth[i] - bossDamage, 0);
@@ -98,7 +102,7 @@ public class Lesson_4_1 {
         }
 
         if (totalSavedHealth > 0) {
-            System.out.println("--> Total Gollum Saved Health: " + totalSavedHealth);
+            System.out.println("--> Total Gollum saved health: " + totalSavedHealth);
         }
     }
 
@@ -113,7 +117,7 @@ public class Lesson_4_1 {
 
             if (i == thorIndex && rand.nextInt(10) < 3 && heroesHealth[thorIndex] > 0) { // С шансом 30% Тор застанит босса
                 bossIsStun = true;
-                System.out.println("--> Boss is stunned on next round");
+                System.out.println("--> Thor stuns the boss for the next round!");
             }
 
             if (i == witcherIndex && heroesHealth[witcherIndex] > 0) { // Если ведьмак жив
@@ -121,7 +125,8 @@ public class Lesson_4_1 {
                     if (heroesHealth[j] <= 0) {
                         heroesHealth[j] = heroesHealth[witcherIndex]; // И отдает ему свою жизнь
                         heroesHealth[witcherIndex] = 0; // Но сам погибает
-                        System.out.println("--> Witcher was saved life of " + heroesAttackType[j] + " and add his " + heroesHealth[j]);
+                        System.out.println("--> Witcher saved " + heroesAttackType[j] +
+                                " and gave his life (health: " + heroesHealth[j] + ")");
                         break;
                     }
                 }
@@ -156,9 +161,9 @@ public class Lesson_4_1 {
                     && heroesHealth[i] > 0   // Но не может оживить
             ) {
 
-                int health = rand.nextInt(80) + 20; // Медик лечит на рандомное количество единиц
+                int health = rand.nextInt(140) + 40; // Медик лечит на рандомное количество единиц
                 heroesHealth[i] += health;
-                System.out.println("--> " + heroesAttackType[i] + " was added " + health + " health!");
+                System.out.println("--> Medic healed " + heroesAttackType[i] + " for " + health + " health!");
                 break; // Может лечить только одного члена команды
             }
 
@@ -166,18 +171,22 @@ public class Lesson_4_1 {
     }
 
     public static void printStatistics(int[] damage) {
-        System.out.println("\n----------- ROUND №" + roundNumber + " ---------------");
+        System.out.println("\n|--------------- ROUND №" + roundNumber + " ---------------------->");
 
-        System.out.println("BOSS health: " + bossHealth + ", damage: " + bossDamage
-                + ", defence: " + (bossDefence == null ? "No defence" : bossDefence));
+        System.out.printf("| BOSS health: %d | damage: %d | defence: %s \n|--------------------------------------|\n",
+                bossHealth, bossDamage, (bossDefence == null ? "No defence" : bossDefence));
+
 
         for (int i = 0; i < heroesAttackType.length; i++) {
-            System.out.println(heroesAttackType[i] +
-                    " health: " + (heroesHealth[i] == 0 ? "is died" : heroesHealth[i]) + ", damage: " + heroesDamage[i]);
+            System.out.printf("| %s | health: %s | damage: %s \n",
+                    heroesAttackType[i],
+                    (heroesHealth[i] == 0 ? "dead" : heroesHealth[i]),
+                    heroesDamage[i] == 0 ? "not" : heroesDamage[i]);
         }
 
-        System.out.println("--> Total damage to boss: " + damage[0] + ", of them crit damage: " + damage[1]);
+        System.out.println("|--------------------------------------|");
+        System.out.printf("| --> Total damage to boss: %d, of them crit damage: %d\n", damage[0], damage[1]);
 
-        System.out.println("-- END Stats\n-- Round buffs:");
+        System.out.println("\n<------ End stats -- Round buffs ------>");
     }
 }
